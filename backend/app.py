@@ -1,6 +1,6 @@
-from flask import Flask
+from flask import Flask, jsonify
 from config import Config
-from models import db
+from models import db, Expense
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -18,6 +18,21 @@ def health():
     return {
         "status": "healthy"
     }
+
+@app.route("/expenses")
+def get_expenses():
+    expenses = Expense.query.all()
+    result = []
+    for expense in expenses:
+        result.append({
+            "id": expense.id,
+            "user_id": expense.user_id,
+            "amount": expense.amount,
+            "description": expense.description,
+            "category": expense.category,
+            "date": expense.date.isoformat()
+        })
+    return jsonify(result)
 
 with app.app_context():
     db.create_all()
