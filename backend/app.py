@@ -76,6 +76,48 @@ def create_expense():
         "date": new_expense.date.isoformat()
     }), 201
 
+@app.route("/expenses/<int:expense_id>", methods=["PUT"])
+def update_expense(expense_id): 
+    expense = db.session.get(Expense, expense_id)
+
+    if expense is None:
+        return {"error": "Expense not found"}, 404
+
+    data = request.json
+    
+    if "amount" in data:
+        expense.amount = data["amount"]
+    if "description" in data:
+        expense.description = data["description"]
+    if "category" in data:
+        expense.category = data["category"]
+    if "date" in data:
+        expense.date = date.fromisoformat(data["date"])
+
+    db.session.commit()
+
+    return jsonify({
+        "id": expense.id,
+        "user_id": expense.user_id,
+        "amount": expense.amount,
+        "description": expense.description,
+        "category": expense.category,
+        "date": expense.date.isoformat()
+    })
+
+@app.route("/expenses/<int:expense_id>", methods=["DELETE"])
+def delete_expense(expense_id):
+    expense = db.session.get(Expense, expense_id)
+
+    if expense is None:
+        return {"error": "Expense not found"}, 404
+
+    db.session.delete(expense)
+    db.session.commit()
+
+    return {"message": "Expense deleted successfully"}
+
+
 with app.app_context():
     db.create_all()
 
