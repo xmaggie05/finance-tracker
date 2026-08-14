@@ -23,7 +23,17 @@ def health():
 @app.route("/expenses")
 #Reads Data
 def get_expenses():
-    expenses = Expense.query.all()
+    category = request.args.get("category")
+    user_id = request.args.get("user_id", type=int)
+
+    query = Expense.query
+    if category:
+        query = query.filter_by(category=category)
+    if user_id:
+        query = query.filter_by(user_id=user_id)
+
+    expenses = query.all()
+
     result = []
     for expense in expenses:
         result.append({
@@ -50,6 +60,26 @@ def get_expense(expense_id):
         "description": expense.description,
         "category": expense.category,
         "date": expense.date.isoformat()
+    })
+
+@app.route("/expenses/summary", methods=["GET"])
+def summary_expense():
+    expenses = Expense.query.all()
+
+    total = 0
+    category_totals = {}
+
+    for expense in expenses:
+        total += expense.amount
+
+        if expense.category in category_totals:
+            category_totals[expense.category] += expense.amount
+        else:
+            category_totals[expense.category] = expense.amount
+
+    return jsonify({
+        "total": total,
+        "categories": category_totals
     })
 
 @app.route("/expenses", methods=["POST"])
@@ -116,6 +146,7 @@ def delete_expense(expense_id):
     db.session.commit()
 
     return {"message": "Expense deleted successfully"}
+
 
 
 with app.app_context():
